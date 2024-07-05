@@ -1,0 +1,116 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ exam.title }}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'home' %}">自动评卷系统</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            试卷展示
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="{% url 'exam_list' %}">查看试卷</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            自动评分
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="{% url 'evaluate_all_exams' %}">批阅试卷</a></li>
+                        </ul>
+                    </li>
+
+                </ul>
+
+                                 <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'incorrect_answers_wordcloud' %}">词云图</a>
+                    </li>
+                </ul>
+                                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'profile' %}">个人信息管理</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+<div class="container">
+    <h1>{{ exam.title }}</h1>
+    <div id="countdown" class="mb-3"></div>
+    <form id="examForm" method="post" action="{% url 'submit_exam' %}">
+        {% csrf_token %}
+        <input type="hidden" name="exam_id" value="{{ exam.id }}">
+        {% for question in questions %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ question.question_text }}</h5>
+                    {% if question.question_type == "MC" %}
+                        {% for choice in question.choices.all %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="question_{{ question.id }}" value="{{ choice.id }}" id="choice_{{ choice.id }}">
+                                <label class="form-check-label" for="choice_{{ choice.id }}">
+                                    {{ choice.choice_text }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    {% elif question.question_type == "FB" %}
+                        <div class="mb-3">
+                            <input type="text" class="form-control" name="question_{{ question.id }}" placeholder="请输入答案">
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">提交试卷</button>
+    </form>
+</div>
+<!-- Bootstrap JS -->
+<script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<!-- Countdown JS -->
+<script>
+    // 设置倒计时时间（以秒为单位）
+    let timeLeft = 3 * 60; // 3分钟
+
+    // 获取倒计时显示元素
+    const countdownElement = document.getElementById('countdown');
+
+    // 更新倒计时显示
+    function updateCountdown() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        countdownElement.textContent = `${minutes} 分 ${seconds} 秒`;
+        if (timeLeft > 0) {
+            timeLeft--;
+        } else {
+            document.getElementById('examForm').submit();
+        }
+    }
+
+    // 每秒更新一次倒计时
+    setInterval(updateCountdown, 1000);
+</script>
+</body>
+</html>
